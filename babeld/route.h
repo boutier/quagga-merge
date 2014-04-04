@@ -37,9 +37,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef BABEL_ROUTE_H
-#define BABEL_ROUTE_H
-
 #include "babel_interface.h"
 #include "source.h"
 
@@ -105,5 +102,3 @@ void expire_routes(void);
 
 void babel_uninstall_all_routes(void);
 struct babel_route *babel_route_get_by_source(struct source *src);
-
-#endif
