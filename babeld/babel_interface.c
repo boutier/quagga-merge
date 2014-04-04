@@ -288,6 +288,7 @@ babel_enable_if_delete (const char *ifname)
     return 1;
 }
 
+
 /* [Babel Command] Babel enable on specified interface or matched network. */
 DEFUN (babel_network,
        babel_network_cmd,
@@ -343,25 +344,6 @@ DEFUN (no_babel_network,
     return CMD_SUCCESS;
 }
 
-/* There are a number of interface parameters that must be changed when
-   an interface becomes wired/wireless.  In Quagga, they cannot be
-   configured separately. */
-
-static void
-babel_set_wired_internal(babel_interface_nfo *babel_ifp, int wired)
-{
-    if(wired) {
-        babel_ifp->flags |= BABEL_IF_WIRED;
-        babel_ifp->cost = 96;
-        babel_ifp->flags &= ~BABEL_IF_LQ;
-    } else {
-        babel_ifp->flags &= ~BABEL_IF_WIRED;
-        babel_ifp->cost = 256;
-        babel_ifp->flags |= BABEL_IF_LQ;
-    }
-
-}
-
 /* [Interface Command] Tell the interface is wire. */
 DEFUN (babel_set_wired,
        babel_set_wired_cmd,
@@ -376,7 +358,7 @@ DEFUN (babel_set_wired,
     babel_ifp = babel_get_if_nfo(ifp);
 
     assert (babel_ifp != NULL);
-    babel_set_wired_internal(babel_ifp, 1);
+    babel_ifp->flags |= BABEL_IF_WIRED;
     return CMD_SUCCESS;
 }
 
@@ -394,7 +376,7 @@ DEFUN (babel_set_wireless,
     babel_ifp = babel_get_if_nfo(ifp);
 
     assert (babel_ifp != NULL);
-    babel_set_wired_internal(babel_ifp, 0);
+    babel_ifp->flags &= ~BABEL_IF_WIRED;
     return CMD_SUCCESS;
 }
 
@@ -574,6 +556,14 @@ interface_recalculate(struct interface *ifp)
     tmp = NULL;
 
     resize_receive_buffer(mtu);
+
+    if(!(babel_ifp->flags & BABEL_IF_WIRED)) { /* if (wired) */
+        babel_ifp->cost = 96;
+        babel_ifp->flags &= ~BABEL_IF_LQ;
+    } else {
+        babel_ifp->cost = 256;
+        babel_ifp->flags |= BABEL_IF_LQ;
+    }
 
     memset(&mreq, 0, sizeof(mreq));
     memcpy(&mreq.ipv6mr_multiaddr, protocol_group, 16);
@@ -1028,7 +1018,6 @@ babel_interface_allocate (void)
     babel_ifp->hello_interval = BABEL_DEFAULT_HELLO_INTERVAL;
     babel_ifp->update_interval = BABEL_DEFAULT_UPDATE_INTERVAL;
     babel_ifp->channel = BABEL_IF_CHANNEL_INTERFERING;
-    babel_set_wired_internal(babel_ifp, 0);
 
     return babel_ifp;
 }
