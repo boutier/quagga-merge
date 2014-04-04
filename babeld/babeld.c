@@ -59,7 +59,6 @@ THE SOFTWARE.
 #include "message.h"
 #include "resend.h"
 #include "babel_filter.h"
-#include "babel_zebra.h"
 
 
 static int babel_init_routing_process(struct thread *thread);
@@ -93,26 +92,7 @@ static struct cmd_node cmd_babel_node =
 static int
 babel_config_write (struct vty *vty)
 {
-    int lines = 0;
-    int i;
-
-    /* list enabled debug modes */
-    lines += debug_babel_config_write (vty);
-
-    if (!babel_routing_process)
-        return lines;
-    vty_out (vty, "router babel%s", VTY_NEWLINE);
-    /* list enabled interfaces */
-    lines = 1 + babel_enable_if_config_write (vty);
-    /* list redistributed protocols */
-    for (i = 0; i < ZEBRA_ROUTE_MAX; i++)
-        if (i != zclient->redist_default && zclient->redist[i])
-        {
-            vty_out (vty, " redistribute %s%s", zebra_route_string (i), VTY_NEWLINE);
-            lines++;
-        }
-
-    return lines;
+    return 0;
 }
 
 
@@ -721,3 +701,9 @@ redistribute_filter(const unsigned char *prefix, unsigned short plen,
     return 0;
 }
 
+void
+show_babeld_configuration (struct vty *vty)
+{
+    vty_out(vty, "babeld running process %s.%s",
+            babel_routing_process ? "enable" : "disable", VTY_NEWLINE);
+}
