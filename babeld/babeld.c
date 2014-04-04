@@ -269,7 +269,7 @@ babel_initial_noise(void)
 static void
 babel_clean_routing_process()
 {
-    flush_all_routes();
+    babel_uninstall_all_routes();
     babel_interface_close_all();
 
     /* cancel threads */

@@ -122,8 +122,7 @@ find_neighbour(const unsigned char *address, struct interface *ifp)
     return neigh;
 }
 
-/* Recompute a neighbour's rxcost.  Return true if anything changed.
-   This does not call local_notify_neighbour, see update_neighbour_metric. */
+/* Recompute a neighbour's rxcost.  Return true if anything changed. */
 int
 update_neighbour(struct neighbour *neigh, int hello, int hello_interval)
 {
@@ -328,7 +327,7 @@ neighbour_cost(struct neighbour *neigh)
         return INFINITY;
 
     if(!(babel_get_if_nfo(neigh->ifp)->flags & BABEL_IF_LQ)
-       || (a < 256 && b < 256)) {
+       || (a <= 256 && b <= 256)) {
         return a;
     } else {
         /* a = 256/alpha, b = 256/beta, where alpha and beta are the expected
