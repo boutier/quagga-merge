@@ -186,16 +186,12 @@ kernel_route_add_v4(const unsigned char *pref, unsigned short plen,
        correctly. */
 
     SET_FLAG(api.message, ZAPI_MESSAGE_NEXTHOP);
+    api.nexthop_num = 1;
+    api.nexthop = &nexthop_pointer;
     api.ifindex_num = 0;
-    if(metric >= KERNEL_INFINITY) {
-        api.flags = ZEBRA_FLAG_BLACKHOLE;
-        api.nexthop_num = 0;
-    } else {
-        api.nexthop_num = 1;
-        api.nexthop = &nexthop_pointer;
-        SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
-        api.metric = metric;
-    }
+
+    SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
+    api.metric = metric;
 
     debugf(BABEL_DEBUG_ROUTE, "adding route (ipv4) to zebra");
     return zapi_ipv4_route (ZEBRA_IPV4_ROUTE_ADD, zclient,
@@ -230,18 +226,13 @@ kernel_route_add_v6(const unsigned char *pref, unsigned short plen,
     api.message = 0;
     api.safi = SAFI_UNICAST;
     SET_FLAG(api.message, ZAPI_MESSAGE_NEXTHOP);
-    if(metric >= KERNEL_INFINITY) {
-        api.nexthop_num = 0;
-        api.ifindex_num = 0;
-    } else {
-        api.nexthop_num = 1;
-        api.nexthop = &nexthop_pointer;
-        SET_FLAG(api.message, ZAPI_MESSAGE_IFINDEX);
-        api.ifindex_num = 1;
-        api.ifindex = &tmp_ifindex;
-        SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
-        api.metric = metric;
-    }
+    api.nexthop_num = 1;
+    api.nexthop = &nexthop_pointer;
+    SET_FLAG(api.message, ZAPI_MESSAGE_IFINDEX);
+    api.ifindex_num = 1;
+    api.ifindex = &tmp_ifindex;
+    SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
+    api.metric = metric;
 
     debugf(BABEL_DEBUG_ROUTE, "adding route (ipv6) to zebra");
     return zapi_ipv6_route (ZEBRA_IPV6_ROUTE_ADD, zclient,
@@ -276,16 +267,11 @@ kernel_route_delete_v4(const unsigned char *pref, unsigned short plen,
     api.message = 0;
     api.safi = SAFI_UNICAST;
     SET_FLAG(api.message, ZAPI_MESSAGE_NEXTHOP);
+    api.nexthop_num = 1;
+    api.nexthop = &nexthop_pointer;
     api.ifindex_num = 0;
-    if(metric >= KERNEL_INFINITY) {
-        api.flags = ZEBRA_FLAG_BLACKHOLE;
-        api.nexthop_num = 0;
-    } else {
-        api.nexthop_num = 1;
-        api.nexthop = &nexthop_pointer;
-        SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
-        api.metric = metric;
-    }
+    SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
+    api.metric = metric;
 
     debugf(BABEL_DEBUG_ROUTE, "removing route (ipv4) to zebra");
     return zapi_ipv4_route (ZEBRA_IPV4_ROUTE_DELETE, zclient,
@@ -321,19 +307,11 @@ kernel_route_delete_v6(const unsigned char *pref, unsigned short plen,
     api.message = 0;
     api.safi = SAFI_UNICAST;
     SET_FLAG(api.message, ZAPI_MESSAGE_NEXTHOP);
-    if(metric >= KERNEL_INFINITY) {
-        api.flags = ZEBRA_FLAG_BLACKHOLE;
-        api.nexthop_num = 0;
-        api.ifindex_num = 0;
-    } else {
-        api.nexthop_num = 1;
-        api.nexthop = &nexthop_pointer;
-        SET_FLAG(api.message, ZAPI_MESSAGE_IFINDEX);
-        api.ifindex_num = 1;
-        api.ifindex = &tmp_ifindex;
-        SET_FLAG(api.message, ZAPI_MESSAGE_METRIC);
-        api.metric = metric;
-    }
+    api.nexthop_num = 1;
+    api.nexthop = &nexthop_pointer;
+    SET_FLAG(api.message, ZAPI_MESSAGE_IFINDEX);
+    api.ifindex_num = 1;
+    api.ifindex = &tmp_ifindex;
 
     debugf(BABEL_DEBUG_ROUTE, "removing route (ipv6) to zebra");
     return zapi_ipv6_route (ZEBRA_IPV6_ROUTE_DELETE, zclient,
