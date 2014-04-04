@@ -145,34 +145,35 @@ parse_packet(const unsigned char *from, struct interface *ifp,
         v4_nh[16], v6_nh[16];
 
     if(!linklocal(from)) {
-        zlog_err("Received packet from non-local address %s.",
-                 format_address(from));
+        fprintf(stderr, "Received packet from non-local address %s.\n",
+                format_address(from));
         return;
     }
 
     if(packet[0] != 42) {
-        zlog_err("Received malformed packet on %s from %s.",
-                 ifp->name, format_address(from));
+        fprintf(stderr, "Received malformed packet on %s from %s.\n",
+                ifp->name, format_address(from));
         return;
     }
 
     if(packet[1] != 2) {
-        zlog_err("Received packet with unknown version %d on %s from %s.",
-                 packet[1], ifp->name, format_address(from));
+        fprintf(stderr,
+                "Received packet with unknown version %d on %s from %s.\n",
+                packet[1], ifp->name, format_address(from));
         return;
     }
 
     neigh = find_neighbour(from, ifp);
     if(neigh == NULL) {
-        zlog_err("Couldn't allocate neighbour.");
+        fprintf(stderr, "Couldn't allocate neighbour.\n");
         return;
     }
 
     DO_NTOHS(bodylen, packet + 2);
 
     if(bodylen + 4 > packetlen) {
-        zlog_err("Received truncated packet (%d + 4 > %d).",
-                 bodylen, packetlen);
+        fprintf(stderr, "Received truncated packet (%d + 4 > %d).\n",
+                bodylen, packetlen);
         bodylen = packetlen - 4;
     }
 
@@ -187,12 +188,12 @@ parse_packet(const unsigned char *from, struct interface *ifp,
             continue;
         }
         if(i + 1 > bodylen) {
-            zlog_err("Received truncated message.");
+            fprintf(stderr, "Received truncated message.\n");
             break;
         }
         len = message[1];
         if(i + len > bodylen) {
-            zlog_err("Received truncated message.");
+            fprintf(stderr, "Received truncated message.\n");
             break;
         }
 
@@ -329,7 +330,7 @@ parse_packet(const unsigned char *from, struct interface *ifp,
                 have_router_id = 1;
             }
             if(!have_router_id && message[2] != 0) {
-                zlog_err("Received prefix with no router id.");
+                fprintf(stderr, "Received prefix with no router id.\n");
                 goto fail;
             }
             debugf(BABEL_DEBUG_COMMON,"Received update%s%s for %s from %s on %s.",
@@ -340,7 +341,8 @@ parse_packet(const unsigned char *from, struct interface *ifp,
 
             if(message[2] == 0) {
                 if(metric < 0xFFFF) {
-                    zlog_err("Received wildcard update with finite metric.");
+                    fprintf(stderr,
+                            "Received wildcard update with finite metric.\n");
                     goto done;
                 }
                 retract_neighbour_routes(neigh);
@@ -407,8 +409,8 @@ parse_packet(const unsigned char *from, struct interface *ifp,
         continue;
 
     fail:
-        zlog_err("Couldn't parse packet (%d, %d) from %s on %s.",
-                 message[0], message[1], format_address(from), ifp->name);
+        fprintf(stderr, "Couldn't parse packet (%d, %d) from %s on %s.\n",
+                message[0], message[1], format_address(from), ifp->name);
         goto done;
     }
     return;
@@ -468,8 +470,8 @@ flushbuf(struct interface *ifp)
             if(rc < 0)
                 zlog_err("send: %s", safe_strerror(errno));
         } else {
-            zlog_err("Warning: bucket full, dropping packet to %s.",
-                     ifp->name);
+            fprintf(stderr, "Warning: bucket full, dropping packet to %s.\n",
+                    ifp->name);
         }
     }
     VALGRIND_MAKE_MEM_UNDEFINED(babel_ifp->sendbuf, babel_ifp->bufsize);
@@ -703,9 +705,11 @@ flush_unicast(int dofree)
         if(rc < 0)
             zlog_err("send(unicast): %s", safe_strerror(errno));
     } else {
-        zlog_err("Warning: bucket full, dropping unicast packet to %s if %s.",
-                 format_address(unicast_neighbour->address),
-                 unicast_neighbour->ifp->name);
+        fprintf(stderr,
+                "Warning: bucket full, dropping unicast packet"
+                "to %s if %s.\n",
+                format_address(unicast_neighbour->address),
+                unicast_neighbour->ifp->name);
     }
 
  done:
