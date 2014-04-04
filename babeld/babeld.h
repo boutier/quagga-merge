@@ -107,11 +107,7 @@ THE SOFTWARE.
 #define BABEL_VTY_PORT 2609
 #define BABEL_DEFAULT_CONFIG "babeld.conf"
 #define BABEL_VERSION "0.1 for quagga"
-
-/* Values in milliseconds */
-#define BABEL_DEFAULT_HELLO_INTERVAL 4000
-#define BABEL_DEFAULT_UPDATE_INTERVAL 16000
-#define BABEL_DEFAULT_RESEND_DELAY 2000
+#define BABELD_DEFAULT_HELLO_INTERVAL 4000 /* miliseconds */
 
 
 /* Babel socket. */
