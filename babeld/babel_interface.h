@@ -90,15 +90,12 @@ static inline babel_interface_nfo* babel_get_if_nfo(struct interface *ifp)
 #define BABEL_IF_SPLIT_HORIZON (1 << 2)
 #define BABEL_IF_LQ            (1 << 3)
 #define BABEL_IF_IS_ENABLE     (1 << 4)
-#define BABEL_IF_IS_UP         (1 << 5)
 
 static inline int
 if_up(struct interface *ifp)
 {
-    return (if_is_operative(ifp) &&
+    return (if_is_up(ifp) &&
             ifp->connected != NULL &&
-            babel_get_if_nfo(ifp) != NULL &&
-            (babel_get_if_nfo(ifp)->flags & BABEL_IF_IS_UP) &&
             (babel_get_if_nfo(ifp)->flags & BABEL_IF_IS_ENABLE));
 }
 
