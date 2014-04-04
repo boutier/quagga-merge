@@ -48,7 +48,6 @@ const char *zlog_proto_names[] =
   "BGP",
   "OSPF",
   "RIPNG",
-  "BABEL",
   "OSPF6",
   "ISIS",
   "MASC",
