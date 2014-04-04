@@ -52,7 +52,7 @@ struct babel_route {
     short installed;
 };
 
-static inline unsigned short
+static inline int
 route_metric(const struct babel_route *route)
 {
     return route->metric;
