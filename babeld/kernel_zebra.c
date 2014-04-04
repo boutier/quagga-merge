@@ -59,20 +59,26 @@ THE SOFTWARE.
 
 static int
 kernel_route_add_v4(const unsigned char *pref, unsigned short plen,
-                    const unsigned char *gate, int ifindex,
-                    unsigned int metric);
+                    const unsigned char *gate, int ifindex, unsigned int metric,
+                    const unsigned char *newgate, int newifindex,
+                    unsigned int newmetric);
 static int
 kernel_route_add_v6(const unsigned char *pref, unsigned short plen,
-                    const unsigned char *gate, int ifindex,
-                    unsigned int metric);
+                    const unsigned char *gate, int ifindex, unsigned int metric,
+                    const unsigned char *newgate, int newifindex,
+                    unsigned int newmetric);
 static int
 kernel_route_delete_v4(const unsigned char *pref, unsigned short plen,
                        const unsigned char *gate, int ifindex,
-                       unsigned int metric);
+                       unsigned int metric,
+                       const unsigned char *newgate, int newifindex,
+                       unsigned int newmetric);
 static int
 kernel_route_delete_v6(const unsigned char *pref, unsigned short plen,
                        const unsigned char *gate, int ifindex,
-                       unsigned int metric);
+                       unsigned int metric,
+                       const unsigned char *newgate, int newifindex,
+                       unsigned int newmetric);
 
 int
 kernel_interface_operational(struct interface *interface)
@@ -119,29 +125,47 @@ kernel_route(int operation, const unsigned char *pref, unsigned short plen,
     switch (operation) {
         case ROUTE_ADD:
             return ipv4 ?
-                   kernel_route_add_v4(pref, plen, gate, ifindex, metric):
-                   kernel_route_add_v6(pref, plen, gate, ifindex, metric);
+                   kernel_route_add_v4(pref, plen, gate, ifindex, metric,
+                                       newgate, newifindex, newmetric):
+                   kernel_route_add_v6(pref, plen, gate, ifindex, metric,
+                                       newgate, newifindex, newmetric);
             break;
         case ROUTE_FLUSH:
             return ipv4 ?
-                   kernel_route_delete_v4(pref, plen, gate, ifindex, metric):
-                   kernel_route_delete_v6(pref, plen, gate, ifindex, metric);
+                   kernel_route_delete_v4(pref, plen, gate, ifindex, metric,
+                                          newgate, newifindex, newmetric):
+                   kernel_route_delete_v6(pref, plen, gate, ifindex, metric,
+                                          newgate, newifindex, newmetric);
             break;
         case ROUTE_MODIFY:
             if(newmetric == metric && memcmp(newgate, gate, 16) == 0 &&
                newifindex == ifindex)
                 return 0;
             debugf(BABEL_DEBUG_ROUTE, "Modify route: delete old; add new.");
-            rc = ipv4 ?
-                kernel_route_delete_v4(pref, plen, gate, ifindex, metric):
-                kernel_route_delete_v6(pref, plen, gate, ifindex, metric);
+            if (ipv4) {
+                kernel_route_delete_v4(pref, plen,
+                                       gate, ifindex, metric,
+                                       NULL, 0, 0);
+            } else {
+                kernel_route_delete_v6(pref, plen,
+                                       gate, ifindex, metric,
+                                       NULL, 0, 0);
+            }
 
-            if (rc < 0)
-                return -1;
-
             rc = ipv4 ?
-                kernel_route_add_v4(pref, plen, newgate, newifindex, newmetric):
-                kernel_route_add_v6(pref, plen, newgate, newifindex, newmetric);
+            kernel_route_add_v4(pref, plen,
+                                newgate, newifindex, newmetric,
+                                NULL, 0, 0):
+            kernel_route_add_v6(pref, plen,
+                                newgate, newifindex, newmetric,
+                                NULL, 0, 0);
+            if(rc < 0) {
+                if(errno == EEXIST)
+                    rc = 1;
+                /* In principle, we should try to re-install the flushed
+                 route on failure to preserve.  However, this should
+                 hopefully not matter much in practice. */
+            }
 
             return rc;
             break;
@@ -155,7 +179,9 @@ kernel_route(int operation, const unsigned char *pref, unsigned short plen,
 
 static int
 kernel_route_add_v4(const unsigned char *pref, unsigned short plen,
-                    const unsigned char *gate, int ifindex, unsigned int metric)
+                    const unsigned char *gate, int ifindex, unsigned int metric,
+                    const unsigned char *newgate, int newifindex,
+                    unsigned int newmetric)
 {
     unsigned int tmp_ifindex = ifindex; /* (for typing) */
     struct zapi_ipv4 api;               /* quagga's communication system */
@@ -164,7 +190,7 @@ kernel_route_add_v4(const unsigned char *pref, unsigned short plen,
     struct in_addr nexthop;             /* next router to go */
     struct in_addr *nexthop_pointer = &nexthop; /* it's an array! */
 
-    /* convert to be understandable by quagga */
+    /* convert to be comprehensive by quagga */
     /* convert given addresses */
     uchar_to_inaddr(&babel_prefix_addr, pref);
     uchar_to_inaddr(&nexthop, gate);
@@ -196,7 +222,9 @@ kernel_route_add_v4(const unsigned char *pref, unsigned short plen,
 
 static int
 kernel_route_add_v6(const unsigned char *pref, unsigned short plen,
-                    const unsigned char *gate, int ifindex, unsigned int metric)
+                    const unsigned char *gate, int ifindex, unsigned int metric,
+                    const unsigned char *newgate, int newifindex,
+                    unsigned int newmetric)
 {
     unsigned int tmp_ifindex = ifindex; /* (for typing) */
     struct zapi_ipv6 api;               /* quagga's communication system */
@@ -205,7 +233,7 @@ kernel_route_add_v6(const unsigned char *pref, unsigned short plen,
     struct in6_addr nexthop;            /* next router to go */
     struct in6_addr *nexthop_pointer = &nexthop;
 
-    /* convert to be understandable by quagga */
+    /* convert to be comprehensive by quagga */
     /* convert given addresses */
     uchar_to_in6addr(&babel_prefix_addr, pref);
     uchar_to_in6addr(&nexthop, gate);
@@ -238,7 +266,9 @@ kernel_route_add_v6(const unsigned char *pref, unsigned short plen,
 static int
 kernel_route_delete_v4(const unsigned char *pref, unsigned short plen,
                        const unsigned char *gate, int ifindex,
-                       unsigned int metric)
+                       unsigned int metric,
+                       const unsigned char *newgate, int newifindex,
+                       unsigned int newmetric)
 {
     unsigned int tmp_ifindex = ifindex; /* (for typing) */
     struct zapi_ipv4 api;               /* quagga's communication system */
@@ -247,7 +277,7 @@ kernel_route_delete_v4(const unsigned char *pref, unsigned short plen,
     struct in_addr nexthop;             /* next router to go */
     struct in_addr *nexthop_pointer = &nexthop; /* it's an array! */
 
-    /* convert to be understandable by quagga */
+    /* convert to be comprehensive by quagga */
     /* convert given addresses */
     uchar_to_inaddr(&babel_prefix_addr, pref);
     uchar_to_inaddr(&nexthop, gate);
@@ -280,7 +310,9 @@ kernel_route_delete_v4(const unsigned char *pref, unsigned short plen,
 static int
 kernel_route_delete_v6(const unsigned char *pref, unsigned short plen,
                        const unsigned char *gate, int ifindex,
-                       unsigned int metric)
+                       unsigned int metric,
+                       const unsigned char *newgate, int newifindex,
+                       unsigned int newmetric)
 {
     unsigned int tmp_ifindex = ifindex; /* (for typing) */
     struct zapi_ipv6 api;               /* quagga's communication system */
@@ -289,7 +321,7 @@ kernel_route_delete_v6(const unsigned char *pref, unsigned short plen,
     struct in6_addr nexthop;            /* next router to go */
     struct in6_addr *nexthop_pointer = &nexthop;
 
-    /* convert to be understandable by quagga */
+    /* convert to be comprehensive by quagga */
     /* convert given addresses */
     uchar_to_in6addr(&babel_prefix_addr, pref);
     uchar_to_in6addr(&nexthop, gate);
