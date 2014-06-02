@@ -155,6 +155,16 @@ i.e. when the RTT is higher or equal than rtt-max.  The default is 0,
 which effectively disables the use of a RTT-based cost.
 @end deffn
 
+@deffn {Interface Command} {babel enable-timestamps}
+@deffnx {Interface Command} {no babel enable-timestamps}
+This specifies whether we should send timestamps with each Hello and IHU
+message, in order to compute RTTs.  The overhead is about 8 bytes per
+message.  When unset, the behaviour on this interface is identical to a
+non-RTT-aware babeld.  Namely, we are unable to compute RTTs, and our
+neighbours on this interface are also unable to compute RTTs to us.  The
+default is @code{babel enable-timestamps} for all interfaces.
+@end deffn
+
 @deffn {Babel Command} {babel resend-delay <20-655340>}
 Specifies the time in milliseconds after which an ``important''
 request or update will be resent.  The default is 2000@dmn{ms}.  You
